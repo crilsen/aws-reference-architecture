@@ -23,9 +23,9 @@ check "lab_account_boundary" {
 }
 
 module "network" {
-  source = "../../modules/network"
-  project_name = var.project_name
-  vpc_cidr = var.vpc_cidr
+  source             = "../../modules/network"
+  project_name       = var.project_name
+  vpc_cidr           = var.vpc_cidr
   availability_zones = local.availability_zones
 }
 
@@ -35,12 +35,12 @@ module "identity" {
 }
 
 module "cluster" {
-  source = "../../modules/eks"
-  project_name = var.project_name
-  kubernetes_version = var.kubernetes_version
-  private_subnet_ids = module.network.private_subnet_ids
-  cluster_role_arn = module.identity.cluster_role_arn
-  node_role_arn = module.identity.node_role_arn
+  source              = "../../modules/eks"
+  project_name        = var.project_name
+  kubernetes_version  = var.kubernetes_version
+  private_subnet_ids  = module.network.private_subnet_ids
+  cluster_role_arn    = module.identity.cluster_role_arn
+  node_role_arn       = module.identity.node_role_arn
   node_instance_types = var.node_instance_types
 }
 
@@ -49,7 +49,7 @@ module "registry" {
   project_name = var.project_name
 }
 module "observability" {
-  source = "../../modules/observability"
+  source       = "../../modules/observability"
   project_name = var.project_name
   cluster_name = module.cluster.cluster_name
 }

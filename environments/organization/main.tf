@@ -22,10 +22,10 @@ check "management_account_boundary" {
 module "organization" {
   source = "../../modules/organizations"
 
-  organization_name         = var.organization_name
-  lab_account_email         = var.lab_account_email
-  production_account_email  = var.production_account_email
-  account_access_role_name  = var.account_access_role_name
+  organization_name        = var.organization_name
+  lab_account_email        = var.lab_account_email
+  production_account_email = var.production_account_email
+  account_access_role_name = var.account_access_role_name
 }
 
 module "service_control_policies" {
