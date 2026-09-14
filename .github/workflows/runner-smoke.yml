@@ -1,0 +1,23 @@
+name: Private runner smoke test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-private-runner:
+    runs-on: [self-hosted, eks-lab, private-vpc]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate AWS identity
+        run: aws sts get-caller-identity
+      - name: Validate private EKS API access
+        run: aws eks describe-cluster --region us-east-1 --name eks-lab --query 'cluster.status' --output text
+      - name: Validate deployment tooling
+        run: |
+          terraform version
+          kubectl version --client
+          helm version
