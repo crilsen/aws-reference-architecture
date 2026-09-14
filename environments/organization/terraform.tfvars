@@ -1,0 +1,6 @@
+aws_region               = "us-east-1"
+management_account_id    = "replace-with-management-account-id"
+organization_name        = "kubernetes-lab"
+lab_account_email        = "replace-with-a-unique-lab-email"
+production_account_email = "replace-with-a-unique-production-email"
+account_access_role_name  = "OrganizationAccountAccessRole"

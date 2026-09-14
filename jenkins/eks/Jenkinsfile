@@ -1,0 +1,83 @@
+pipeline {
+  agent any
+
+  options {
+    disableConcurrentBuilds()
+    timestamps()
+    timeout(time: 45, unit: 'MINUTES')
+  }
+
+  parameters {
+    choice(name: 'ACTION', choices: ['validate', 'plan', 'apply'], description: 'Terraform action to execute.')
+  }
+
+  environment {
+    TF_IN_AUTOMATION = 'true'
+    TF_INPUT         = 'false'
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
+    }
+
+    stage('Format') {
+      steps {
+        sh 'terraform fmt -check -recursive aws/environments/lab aws/modules'
+      }
+    }
+
+    stage('Initialize') {
+      steps {
+        dir('aws/environments/lab') {
+          sh 'terraform init -input=false'
+        }
+      }
+    }
+
+    stage('Validate') {
+      steps {
+        dir('aws/environments/lab') {
+          sh 'terraform validate'
+        }
+      }
+    }
+
+    stage('Plan') {
+      when {
+        anyOf {
+          expression { params.ACTION == 'plan' }
+          expression { params.ACTION == 'apply' }
+        }
+      }
+      steps {
+        dir('aws/environments/lab') {
+          sh 'terraform plan -input=false -var-file=terraform.tfvars -out=tfplan'
+        }
+      }
+    }
+
+    stage('Approve') {
+      when {
+        expression { params.ACTION == 'apply' }
+      }
+      steps {
+        input message: 'Apply the reviewed EKS plan?', ok: 'Apply'
+      }
+    }
+
+    stage('Apply') {
+      when {
+        expression { params.ACTION == 'apply' }
+      }
+      steps {
+        dir('aws/environments/lab') {
+          sh 'terraform apply -input=false -auto-approve tfplan'
+        }
+      }
+    }
+  }
+
+}

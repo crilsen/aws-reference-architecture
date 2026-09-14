@@ -1,0 +1,45 @@
+pipeline {
+  agent any
+
+  options {
+    disableConcurrentBuilds()
+    timestamps()
+    timeout(time: 30, unit: 'MINUTES')
+  }
+
+  parameters {
+    choice(name: 'ACTION', choices: ['validate', 'plan'], description: 'SCP jobs do not perform targeted applies.')
+  }
+
+  environment {
+    TF_IN_AUTOMATION = 'true'
+    TF_INPUT         = 'false'
+  }
+
+  stages {
+    stage('Checkout') {
+      steps { checkout scm }
+    }
+    stage('Format') {
+      steps { sh 'terraform fmt -check -recursive aws/environments/organization aws/modules/scp' }
+    }
+    stage('Initialize') {
+      steps {
+        dir('aws/environments/organization') { sh 'terraform init -input=false' }
+      }
+    }
+    stage('Validate') {
+      steps {
+        dir('aws/environments/organization') { sh 'terraform validate' }
+      }
+    }
+    stage('Plan SCP') {
+      when { expression { params.ACTION == 'plan' } }
+      steps {
+        dir('aws/environments/organization') {
+          sh 'terraform plan -input=false -var-file=terraform.tfvars -target=module.service_control_policies -out=scp.tfplan'
+        }
+      }
+    }
+  }
+}

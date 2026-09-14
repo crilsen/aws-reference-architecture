@@ -1,0 +1,45 @@
+pipeline {
+  agent any
+
+  options {
+    disableConcurrentBuilds()
+    timestamps()
+    timeout(time: 30, unit: 'MINUTES')
+  }
+
+  parameters {
+    choice(name: 'ACTION', choices: ['validate', 'plan'], description: 'VPC jobs do not perform targeted applies.')
+  }
+
+  environment {
+    TF_IN_AUTOMATION = 'true'
+    TF_INPUT         = 'false'
+  }
+
+  stages {
+    stage('Checkout') {
+      steps { checkout scm }
+    }
+    stage('Format') {
+      steps { sh 'terraform fmt -check -recursive aws/environments/lab aws/modules/network' }
+    }
+    stage('Initialize') {
+      steps {
+        dir('aws/environments/lab') { sh 'terraform init -input=false' }
+      }
+    }
+    stage('Validate') {
+      steps {
+        dir('aws/environments/lab') { sh 'terraform validate' }
+      }
+    }
+    stage('Plan VPC') {
+      when { expression { params.ACTION == 'plan' } }
+      steps {
+        dir('aws/environments/lab') {
+          sh 'terraform plan -input=false -var-file=terraform.tfvars -target=module.network -out=vpc.tfplan'
+        }
+      }
+    }
+  }
+}

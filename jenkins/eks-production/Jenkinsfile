@@ -1,0 +1,64 @@
+pipeline {
+  agent any
+
+  options {
+    disableConcurrentBuilds()
+    timestamps()
+    timeout(time: 45, unit: 'MINUTES')
+  }
+
+  parameters {
+    choice(name: 'ACTION', choices: ['validate', 'plan', 'apply'], description: 'Terraform action for the Production EKS environment.')
+  }
+
+  environment {
+    TF_IN_AUTOMATION = 'true'
+    TF_INPUT         = 'false'
+  }
+
+  stages {
+    stage('Checkout') {
+      steps { checkout scm }
+    }
+    stage('Format') {
+      steps { sh 'terraform fmt -check -recursive aws/environments/production aws/modules' }
+    }
+    stage('Initialize') {
+      steps {
+        dir('aws/environments/production') { sh 'terraform init -input=false' }
+      }
+    }
+    stage('Validate') {
+      steps {
+        dir('aws/environments/production') { sh 'terraform validate' }
+      }
+    }
+    stage('Plan') {
+      when {
+        anyOf {
+          expression { params.ACTION == 'plan' }
+          expression { params.ACTION == 'apply' }
+        }
+      }
+      steps {
+        dir('aws/environments/production') {
+          sh 'terraform plan -input=false -var-file=terraform.tfvars -out=tfplan'
+        }
+      }
+    }
+    stage('Approve Production') {
+      when { expression { params.ACTION == 'apply' } }
+      steps {
+        input message: 'Apply this exact plan to the verified Production account?', ok: 'Apply to Production'
+      }
+    }
+    stage('Apply') {
+      when { expression { params.ACTION == 'apply' } }
+      steps {
+        dir('aws/environments/production') {
+          sh 'terraform apply -input=false -auto-approve tfplan'
+        }
+      }
+    }
+  }
+}

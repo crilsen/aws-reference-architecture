@@ -1,0 +1,83 @@
+pipeline {
+  agent any
+
+  options {
+    disableConcurrentBuilds()
+    timestamps()
+    timeout(time: 60, unit: 'MINUTES')
+  }
+
+  parameters {
+    choice(name: 'ACTION', choices: ['validate', 'plan', 'apply'], description: 'Terraform action to execute.')
+  }
+
+  environment {
+    TF_IN_AUTOMATION = 'true'
+    TF_INPUT         = 'false'
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
+    }
+
+    stage('Format') {
+      steps {
+        sh 'terraform fmt -check -recursive aws/environments/organization aws/modules/organizations aws/modules/scp'
+      }
+    }
+
+    stage('Initialize') {
+      steps {
+        dir('aws/environments/organization') {
+          sh 'terraform init -input=false'
+        }
+      }
+    }
+
+    stage('Validate') {
+      steps {
+        dir('aws/environments/organization') {
+          sh 'terraform validate'
+        }
+      }
+    }
+
+    stage('Plan') {
+      when {
+        anyOf {
+          expression { params.ACTION == 'plan' }
+          expression { params.ACTION == 'apply' }
+        }
+      }
+      steps {
+        dir('aws/environments/organization') {
+          sh 'terraform plan -input=false -var-file=terraform.tfvars -out=tfplan'
+        }
+      }
+    }
+
+    stage('Approve organization changes') {
+      when {
+        expression { params.ACTION == 'apply' }
+      }
+      steps {
+        input message: 'Apply account, OU, or SCP changes from this exact plan?', ok: 'Apply governance changes'
+      }
+    }
+
+    stage('Apply') {
+      when {
+        expression { params.ACTION == 'apply' }
+      }
+      steps {
+        dir('aws/environments/organization') {
+          sh 'terraform apply -input=false -auto-approve tfplan'
+        }
+      }
+    }
+  }
+
+}
