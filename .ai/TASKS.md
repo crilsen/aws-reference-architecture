@@ -18,3 +18,4 @@
 - Removed generated Lab plans and added an ignore rule.
 - Added and pushed the private-runner smoke workflow on `dev`.
 - Corrected runner bootstrap execution and tooling; removed the invalid AL2023 `awscli2` install.
+- Committed and pushed the network tiers, EKS hardening, VPC endpoint/security-group, and `github-runner` module changes (`851d262`) with account id and NAT EIP as versioned placeholders.

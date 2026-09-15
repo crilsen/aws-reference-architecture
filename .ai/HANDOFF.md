@@ -2,7 +2,7 @@
 
 ## Resume block (read first)
 
-- Repo state: branch `dev`, context checkpoint is committed; working tree remains dirty only with Terraform/module changes awaiting the root split.
+- Repo state: branch `dev`; commit `851d262` (private network tiers, EKS hardening, runner module) pushed. Working tree dirty only with local `environments/lab/terraform.tfvars` (real account id/EIP, intentionally uncommitted).
 - Source of truth: `AGENTS.md` → `.ai/`
 - Budget / usage observed: unknown
 - Checkpoint updated: 2026-09-14
