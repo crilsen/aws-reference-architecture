@@ -24,7 +24,7 @@ if [[ -n "$unexpected_tfvars" ]]; then
   exit 1
 fi
 
-blocked_pattern='BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|AKIA[0-9A-Z]{16}|[0-9]{12}|https?://[^[:space:]]+:[^[:space:]]+@|[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}'
+blocked_pattern='BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|AKIA[0-9A-Z]{16}|\b[0-9]{12}\b|https?://[^[:space:]]+:[^[:space:]]+@|[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}'
 
 if git grep -nEi "$blocked_pattern" -- ':!LICENSE' ':!scripts/check-public-safety.sh'; then
   echo "Potential credential, internal identifier, or organization-specific reference found."
