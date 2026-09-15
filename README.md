@@ -1,5 +1,11 @@
 # AWS: Organizations and EKS
 
+> **Status: under construction.** This project is a work in progress, and active
+> development happens on the **`dev`** branch. The two-stage Lab deployment
+> described below (bootstrap + Lab platform) is not fully implemented yet, so
+> some paths and commands are still subject to change. Treat `main` as the
+> baseline and `dev` as the in-progress branch.
+
 AWS is the comparison baseline. Governance and workloads are independent Terraform roots with separate state.
 
 ## Hierarchy
