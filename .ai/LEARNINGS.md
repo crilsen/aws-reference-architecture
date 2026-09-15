@@ -88,3 +88,23 @@ Context: Designing an automatic warning near provider usage limits.
 Evidence: Providers meter usage differently and do not expose a uniform quota API; OpenCode Go documents usage only in the web console.
 Pattern / rule: Combine reported usage when available with a work-volume proxy, and keep a continuously current Resume block; never state a remaining quota that was not observed.
 Promotion: none
+
+### L-006 — Public-safety scanner matched digits inside lock hashes
+Date: 2026-09-14
+Status: active
+Confidence: observed
+Scope: scripts/check-public-safety.sh | environments/*/.terraform.lock.hcl
+Context: CI failed after committing `.terraform.lock.hcl` and the GitHub runner module.
+Evidence: `[0-9]{12}` matched hex provider hashes (e.g. `zh:6eb29ead...861277736db`) and the AL2023 owner id `137112412989`.
+Pattern / rule: Keep the account-id rule word-bounded (`\b[0-9]{12}\b`) so it ignores substrings inside hashes, and resolve AMIs via SSM parameters instead of hardcoded owner ids.
+Promotion: none
+
+### L-007 — Local gitignored tfstate fails the scanner locally
+Date: 2026-09-14
+Status: active
+Confidence: observed
+Scope: scripts/check-public-safety.sh
+Context: Running the public-safety script locally after `terraform init`.
+Evidence: The `find` blocked-file check flagged `./environments/lab/terraform.tfstate`, which is gitignored and absent from CI checkouts.
+Pattern / rule: A local scanner failure on gitignored state or tfvars is expected; judge the gate by the committed tree (`git grep <pattern> HEAD`) rather than the dirty working tree.
+Promotion: none

@@ -2,7 +2,7 @@
 
 ## Resume block (read first)
 
-- Repo state: branch `dev`; commit `851d262` (private network tiers, EKS hardening, runner module) pushed. Working tree dirty only with local `environments/lab/terraform.tfvars` (real account id/EIP, intentionally uncommitted).
+- Repo state: branch `dev`; commit `466a465` (private network tiers, EKS hardening, runner module, public-safety fix) pushed. Working tree dirty only with local `environments/lab/terraform.tfvars` (real account id/EIP, intentionally uncommitted).
 - Source of truth: `AGENTS.md` → `.ai/`
 - Budget / usage observed: unknown
 - Checkpoint updated: 2026-09-14
