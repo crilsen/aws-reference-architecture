@@ -24,6 +24,52 @@ terraform plan -var-file=terraform.tfvars
 
 Use unique account e-mails privately. Import existing organizations or accounts instead of duplicating them.
 
+## Lab deployment flow
+
+The Lab is intentionally deployed in two stages. The workstation only creates
+the minimum private foundation and the self-hosted GitHub Actions runner. All
+Kubernetes-facing infrastructure is then applied from that runner, inside the
+VPC. This keeps the EKS API private and makes CI the single execution path for
+the application platform.
+
+```text
+Operator workstation
+  └── bootstrap state: VPC, NAT with supplied EIP, endpoints, runner VM
+        └── GitHub Actions self-hosted runner (private subnet)
+              └── lab state: EKS, nodes, add-ons, ALB controller, ingress
+```
+
+### Stage 1 — bootstrap
+
+Run this stage from an authenticated operator workstation. It creates no EKS
+cluster and never enables a public EKS endpoint. The runner registration token
+is stored as a SecureString in SSM Parameter Store and must be refreshed before
+creating or replacing the runner.
+
+```bash
+cd environments/bootstrap
+terraform init
+terraform validate
+terraform plan -var-file=terraform.tfvars -out=tfplan-bootstrap
+terraform apply tfplan-bootstrap
+```
+
+Confirm the runner is `online` in GitHub Actions before proceeding.
+
+### Stage 2 — Lab platform
+
+Trigger the Lab workflow from GitHub Actions. It runs on labels
+`self-hosted`, `eks-lab`, and `private-vpc`; it is the only supported path for
+applying EKS, add-ons, AWS Load Balancer Controller, and public Ingress.
+
+```text
+Actions → Private runner → Terraform lab state → EKS → ALB Controller → ALB
+```
+
+The AWS Load Balancer Controller is managed by Terraform/Helm. A Kubernetes
+`Ingress` with class `alb` creates the public ALB; no ALB is provisioned until
+an Ingress exists.
+
 ## EKS architecture
 
 The `us-east-1` workload root composes:
@@ -41,7 +87,16 @@ terraform validate
 terraform plan -var-file=terraform.tfvars
 ```
 
-The public API endpoint favors lab access; restrict it for broader use. One NAT Gateway reduces lab cost but is not zonally resilient. Remote state, DNS, certificates, ingress, and workload-specific autoscaling remain deliberate omissions.
+The EKS API endpoint is private. One NAT Gateway reduces lab cost but is not
+zonally resilient. Terraform state belongs in the designated S3 backend
+`cn-terraform-state-us-east-1`; do not commit state or plan artifacts.
+
+## Terraform hygiene
+
+Never keep or commit generated plan files. Use a short-lived plan file only
+when applying it immediately, then remove it. The repository ignores all
+`environments/*/tfplan*` files, Terraform state, provider directories, and
+credentials.
 
 ## Enforced account boundaries
 

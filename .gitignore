@@ -3,6 +3,7 @@
 *.tfstate
 *.tfstate.*
 *.tfplan
+environments/*/tfplan*
 *.tfvars
 *.tfvars.json
 !environments/lab/terraform.tfvars
