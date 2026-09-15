@@ -95,7 +95,7 @@ Status: active
 Confidence: observed
 Scope: scripts/check-public-safety.sh | environments/*/.terraform.lock.hcl
 Context: CI failed after committing `.terraform.lock.hcl` and the GitHub runner module.
-Evidence: `[0-9]{12}` matched hex provider hashes (e.g. `zh:6eb29ead...861277736db`) and the AL2023 owner id `137112412989`.
+Evidence: The account-id rule matched hex provider hashes in the lock file and the hardcoded AL2023 AMI owner account id.
 Pattern / rule: Keep the account-id rule word-bounded (`\b[0-9]{12}\b`) so it ignores substrings inside hashes, and resolve AMIs via SSM parameters instead of hardcoded owner ids.
 Promotion: none
 
