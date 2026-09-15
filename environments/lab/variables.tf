@@ -45,3 +45,55 @@ variable "vpc_cidr" {
 variable "node_instance_types" {
   type = list(string)
 }
+
+variable "single_nat_gateway" {
+  description = "Use one NAT Gateway for the Lab to reduce cost."
+  type        = bool
+  default     = true
+}
+
+variable "nat_eip_allocation_id" {
+  description = "Existing Elastic IP allocation ID reserved for the Lab NAT Gateway."
+  type        = string
+  default     = null
+}
+
+variable "endpoint_public_access" {
+  description = "Expose the EKS API publicly. Keep false unless trusted CIDRs are supplied."
+  type        = bool
+  default     = false
+}
+
+variable "public_access_cidrs" {
+  description = "Trusted CIDRs allowed to use the public EKS API endpoint."
+  type        = list(string)
+  default     = []
+}
+
+variable "node_desired_size" {
+  description = "Initial desired node count for the Lab managed node group."
+  type        = number
+  default     = 0
+}
+
+variable "node_min_size" {
+  description = "Minimum node count for the Lab managed node group."
+  type        = number
+  default     = 0
+}
+
+variable "node_max_size" {
+  description = "Maximum node count for the Lab managed node group."
+  type        = number
+  default     = 1
+}
+
+variable "github_repository_url" {
+  description = "GitHub repository that owns the self-hosted runner."
+  type        = string
+}
+
+variable "github_runner_registration_token_parameter_name" {
+  description = "Secure SSM parameter containing a time-limited GitHub runner registration token."
+  type        = string
+}

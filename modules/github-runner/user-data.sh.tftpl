@@ -1,0 +1,50 @@
+#!/bin/bash
+set -euo pipefail
+
+dnf install -y git jq tar gzip unzip docker
+systemctl enable --now docker
+curl -fsSL -o /tmp/terraform.zip https://releases.hashicorp.com/terraform/1.14.0/terraform_1.14.0_linux_amd64.zip
+unzip -o /tmp/terraform.zip -d /usr/local/bin
+curl -fsSL -o /usr/local/bin/kubectl https://dl.k8s.io/release/v1.36.0/bin/linux/amd64/kubectl
+chmod 0755 /usr/local/bin/kubectl
+curl -fsSL -o /tmp/helm.tar.gz https://get.helm.sh/helm-v3.19.4-linux-amd64.tar.gz
+tar xzf /tmp/helm.tar.gz -C /tmp
+install -m 0755 /tmp/linux-amd64/helm /usr/local/bin/helm
+
+useradd --create-home --shell /bin/bash actions || true
+usermod -aG docker actions
+mkdir -p /opt/actions-runner
+cd /opt/actions-runner
+curl -fsSL -o runner.tar.gz https://github.com/actions/runner/releases/download/v${runner_version}/actions-runner-linux-x64-${runner_version}.tar.gz
+tar xzf runner.tar.gz
+chown -R actions:actions /opt/actions-runner
+
+cat >/usr/local/bin/register-github-runner <<'SCRIPT'
+#!/bin/bash
+set -euo pipefail
+if [ -f /opt/actions-runner/.runner ]; then
+  exec runuser -u actions -- /opt/actions-runner/run.sh
+fi
+TOKEN=$(aws ssm get-parameter --region '${aws_region}' --name '${parameter_name}' --with-decryption --query 'Parameter.Value' --output text)
+su -s /bin/bash actions -c "cd /opt/actions-runner && ./config.sh --unattended --url '${repository_url}' --token '$TOKEN' --name '${runner_name}' --labels 'eks-lab,private-vpc' --work '_work'"
+exec runuser -u actions -- /opt/actions-runner/run.sh
+SCRIPT
+chmod 0755 /usr/local/bin/register-github-runner
+
+cat >/etc/systemd/system/github-actions-runner.service <<'UNIT'
+[Unit]
+Description=GitHub Actions self-hosted runner
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=60
+ExecStart=/usr/local/bin/register-github-runner
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+systemctl daemon-reload
+systemctl enable --now github-actions-runner
